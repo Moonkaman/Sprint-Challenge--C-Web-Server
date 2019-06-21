@@ -67,8 +67,15 @@ urlinfo_t *parse_url(char *url)
   *path = '\0';
   path++;
   port = strchr(hostname, ':');
-  *port = '\0';
-  port++;
+  if (port != NULL)
+  {
+    *port = '\0';
+    port++;
+  }
+  else
+  {
+    port = "80";
+  }
 
   urlinfo->path = path;
   urlinfo->port = port;
