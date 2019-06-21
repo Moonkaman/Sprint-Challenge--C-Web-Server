@@ -50,6 +50,19 @@ urlinfo_t *parse_url(char *url)
   // IMPLEMENT ME! //
   ///////////////////
 
+  char *http = strstr(hostname, "http://");
+  char *https = strstr(hostname, "https://");
+
+  if (http != NULL)
+  {
+    hostname += 7;
+  }
+
+  if (https != NULL)
+  {
+    hostname += 8;
+  }
+
   path = strchr(hostname, '/');
   *path = '\0';
   path++;
