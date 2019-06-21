@@ -12,7 +12,8 @@
 /**
  * Struct to hold all three pieces of a URL
  */
-typedef struct urlinfo_t {
+typedef struct urlinfo_t
+{
   char *hostname;
   char *port;
   char *path;
@@ -49,6 +50,39 @@ urlinfo_t *parse_url(char *url)
   // IMPLEMENT ME! //
   ///////////////////
 
+  char *http = strstr(hostname, "http://");
+  char *https = strstr(hostname, "https://");
+
+  if (http != NULL)
+  {
+    hostname += 7;
+  }
+
+  if (https != NULL)
+  {
+    hostname += 8;
+  }
+
+  path = strchr(hostname, '/');
+  *path = '\0';
+  path++;
+  port = strchr(hostname, ':');
+  if (port != NULL)
+  {
+    *port = '\0';
+    port++;
+  }
+  else
+  {
+    port = "80";
+  }
+
+  urlinfo->path = path;
+  urlinfo->port = port;
+  urlinfo->hostname = hostname;
+
+  printf("hostname: %s port: %s path: %s\n", urlinfo->hostname, urlinfo->port, urlinfo->path);
+
   return urlinfo;
 }
 
@@ -71,17 +105,31 @@ int send_request(int fd, char *hostname, char *port, char *path)
   ///////////////////
   // IMPLEMENT ME! //
   ///////////////////
+  int request_len = sprintf(request, "GET /%s HTTP/1.1\n"
+                                     "Host: %s:%s\n"
+                                     "Connection: close\n"
+                                     "\n",
+                            path, hostname, port);
 
-  return 0;
+  // printf("%s\n", request);
+  rv = send(fd, request, request_len, 0);
+
+  if (rv < 0)
+  {
+    perror("send");
+  }
+
+  return rv;
 }
 
 int main(int argc, char *argv[])
-{  
-  int sockfd, numbytes;  
+{
+  int sockfd, numbytes;
   char buf[BUFSIZE];
 
-  if (argc != 2) {
-    fprintf(stderr,"usage: client HOSTNAME:PORT/PATH\n");
+  if (argc != 2)
+  {
+    fprintf(stderr, "usage: client HOSTNAME:PORT/PATH\n");
     exit(1);
   }
 
@@ -96,6 +144,19 @@ int main(int argc, char *argv[])
   ///////////////////
   // IMPLEMENT ME! //
   ///////////////////
+
+  // printf("%s\n", argv[1]);
+  struct urlinfo_t *urlInfo = parse_url(argv[1]);
+  sockfd = get_socket(urlInfo->hostname, urlInfo->port);
+  send_request(sockfd, urlInfo->hostname, urlInfo->port, urlInfo->path);
+
+  while ((numbytes = recv(sockfd, buf, BUFSIZE - 1, 0)) > 0)
+  {
+    printf("%s\n", buf);
+  }
+
+  free(urlInfo);
+  close(sockfd);
 
   return 0;
 }
